@@ -19,11 +19,11 @@ db.once('open', () => {
   // Define a schema
   const Schema = mongoose.Schema;
   const AnimalSchema = new Schema({
-    type: String,
-    color: String,
-    size: String,
-    mass: Number,
-    name: String
+    type: {type: String, defaut: 'dog'},
+    color: {type: String, defaut: 'black'},
+    size: {type: String, defaut: 'big'},
+    mass: {type: Number, defaut: 50},
+    name: {type: String, defaut: 'Warik'}
   });
 
   // To use our schema definition, we need to convert our AnimalSchema into a Model we can work with
@@ -38,14 +38,35 @@ db.once('open', () => {
     name: 'Mimi'
   });
 
-  // Save is an asyncronous method, our app will call save method first 
-  // and then call close right away before save can finish, causing it to fail
-  // Into the save method we need to pass in a callback func and then close the DB connection from inside the callback
-  tiger.save((err) => {
+  const dog = new Animal({});
+
+  const cat = Animal({
+    type: 'cat',
+    size: 'small',
+    mass: 2,
+    name: 'Pi'
+  });
+
+  // we ask model to emty our animals collection before we save anything
+  Animal.remove({}, (err) => {
     if (err) console.error('Save Failed: ', err);
-    else console.log('Saved!');
-    db.close(() => {
-      console.log('DB connection closed!');
-    });
-  }); 
+    // we want all the save actions to take place after the removal
+    tiger.save((err) => {
+      if (err) console.error('Save Failed: ', err);
+      dog.save((err) => {
+        if(err) console.log('Save Failed: ', err);
+        cat.save((err) =>{
+          if (err) console.error('Save Failed: ', err);
+          Animal.find({size:'medium'}, (err, animals) => {
+            animals.forEach(animal => {
+              console.log(animal.name);
+            });
+            db.close(() => {
+              console.log('DB connection closed!');
+            });
+          });
+        });
+      });
+    }); 
+  });
 });

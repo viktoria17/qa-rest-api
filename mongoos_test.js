@@ -21,52 +21,83 @@ db.once('open', () => {
   const AnimalSchema = new Schema({
     type: {type: String, defaut: 'dog'},
     color: {type: String, defaut: 'black'},
-    size: {type: String, defaut: 'big'},
+    size: String,
     mass: {type: Number, defaut: 50},
     name: {type: String, defaut: 'Warik'}
   });
+  // we are passing callback so it can plug into the query inside the func to preserve the flow of our overall application 
+  AnimalSchema.statics.findSize = function(size, callback) {
+    return this.find({size: size}, callback); // this === Animal
+  }
 
   // To use our schema definition, we need to convert our AnimalSchema into a Model we can work with
   const Animal = mongoose.model('Animal', AnimalSchema);
 
+  // pre-save hook 
+  AnimalSchema.pre('save', function(next) {
+    if (this.mass >= 100) {
+      this.size = 'big';
+    } else if (this.mass > 49 && this.mass < 100) {
+      this.size = 'medium';
+    } else {
+      this.size = 'small';
+    }
+    next();
+  });
+
   // Create animal document
-  const tiger = Animal({
+  const tiger = new Animal({
     type: 'tiger',
     color: 'orange',
-    size: 'medium',
     mass: 130,
     name: 'Mimi'
   });
 
   const dog = new Animal({});
 
-  const cat = Animal({
+  const cat = new Animal({
     type: 'cat',
-    size: 'small',
     mass: 2,
     name: 'Pi'
   });
 
+  const animalData = [
+    {
+      type: 'wolf',
+      color: 'gray',
+      mass: 48,
+      name: 'Charli'
+    },
+    {
+      type: 'pig',
+      color: 'rose',
+      mass: 100,
+      name: 'Piggy'
+    },
+    {
+      type: 'elephant',
+      color: 'gray',
+      mass: 200,
+      name: 'Oli'
+    },
+    tiger,
+    dog,
+    cat
+  ]
+
   // we ask model to emty our animals collection before we save anything
   Animal.remove({}, (err) => {
     if (err) console.error('Save Failed: ', err);
-    // we want all the save actions to take place after the removal
-    tiger.save((err) => {
+    Animal.create(animalData, (err, animals) => {
       if (err) console.error('Save Failed: ', err);
-      dog.save((err) => {
-        if(err) console.log('Save Failed: ', err);
-        cat.save((err) =>{
-          if (err) console.error('Save Failed: ', err);
-          Animal.find({size:'medium'}, (err, animals) => {
-            animals.forEach(animal => {
-              console.log(animal.name);
-            });
-            db.close(() => {
-              console.log('DB connection closed!');
-            });
-          });
+      Animal.findSize('big', (err, animals) => {
+        animals.forEach(animal => {
+          console.log(animal.name + ' is ' + animal.size + '-sized.');
+        });
+        db.close(() => {
+          console.log('DB connection closed!');
         });
       });
-    }); 
+    });
   });
 });

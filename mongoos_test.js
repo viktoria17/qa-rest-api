@@ -27,7 +27,14 @@ db.once('open', () => {
   });
   // we are passing callback so it can plug into the query inside the func to preserve the flow of our overall application 
   AnimalSchema.statics.findSize = function(size, callback) {
-    return this.find({size: size}, callback); // this === Animal
+    // this == Animal
+    return this.find({size: size}, callback);
+  }
+
+  // instance methods - exist on all documents
+  AnimalSchema.methods.findSameColor = function(callback) {
+    // this == document
+    return this.model('Animal').find({color: this.color}, callback);
   }
 
   // To use our schema definition, we need to convert our AnimalSchema into a Model we can work with
@@ -90,12 +97,16 @@ db.once('open', () => {
     if (err) console.error('Save Failed: ', err);
     Animal.create(animalData, (err, animals) => {
       if (err) console.error('Save Failed: ', err);
-      Animal.findSize('big', (err, animals) => {
-        animals.forEach(animal => {
-          console.log(animal.name + ' is ' + animal.size + '-sized.');
-        });
-        db.close(() => {
-          console.log('DB connection closed!');
+      // findOne() search the DB for batches and whichever is first to match is the one returned
+      Animal.findOne({type: 'elephant'}, (err, elephant) => {
+        elephant.findSameColor(function(err, animals) {
+          if (err) console.error('Save Failed: ', err);
+          animals.forEach(animal => {
+            console.log(animal.name + ' has ' + animal.color + ' color and is ' + animal.size + '-sized.');
+          });
+          db.close(() => {
+            console.log('DB connection closed!');
+          });
         });
       });
     });

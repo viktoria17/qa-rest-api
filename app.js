@@ -10,6 +10,23 @@ const logger = require('morgan');
 app.use(logger('dev'));
 app.use(jsonParser());
 
+const mongoose = require('mongoose');
+
+// Opens a connection to the qa db on our locally running instance of MongoDB.
+mongoose.connect('mongodb://localhost:27017/qa');
+
+// Pending connection to the test database running on localhost
+const db = mongoose.connection;
+
+// We  need to get notified if we connect successfully or if a connection error occurs
+db.on('error', err => {
+  console.error('Connection error: ', err)
+});
+
+db.once('open', () => {
+  console.log('DB is connected!');
+});
+
 app.use('/questions', routes);
 
 // catch 404 error and forward to error handler

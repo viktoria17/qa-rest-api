@@ -47,6 +47,7 @@ const QuestionSchema = new Schema({
 // We can call instance update method directly on the answer when we want to update it
 AnswerSchema.method('update') = function (updates, callback) {
     // merge the updates into the answers document
+    // this - answers document (target object), 
     Object.assign(this, updates, {updatedAt: new Date()});
     // saves the parent document, the question associated with the answer;
     // to access the question we can use the answers parent method

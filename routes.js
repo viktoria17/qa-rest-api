@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const Question = require('./models');
+const Question = require('./models').Question;
 
 // Express allows us to trigger a handler whenever a URL parameter is present.
 // In our case if qID exists, we can preload the question document in the handler 
@@ -18,7 +18,7 @@ router.param('qID', function(req, res, next, id) { // this callback will get exe
     // If document exists set it on the request object, so it can be used in other middleware
     // and route handlers that receive this request.
     req.question = doc;
-    return next;
+    return next();
   });
 }); 
 
@@ -35,7 +35,7 @@ router.param('aID', function(req, res, next, id) { // this callback will get exe
 });
 
 // /questions
-router.get('/', (req, res, next) => {
+router.get('/', function(req, res, next){
   // we want the API to return all question document
   Question.find({})
     .sort({createdAt: -1})
@@ -72,7 +72,6 @@ router.post('/:qID/answers/', (req, res, next) => {
   // Get the reference to the pre-loaded question, access the collection of answers 
   // and push the object literal version of the document we want to add.
   req.question.answers.push(req.body);
-  if (err) return next(err);
   // To save the document that Mongoose created for us, we need to call save on the question document.
   req.question.save(function(err, question) {
     if (err) return next(err);
@@ -102,24 +101,24 @@ router.delete('/:qID/answers/:aID', (req, res) => {
 
 // Vote on a specific answer 
 // /questions/7/answers/1/vote-up or /questions/7/answers/1/vote-down
-router.post('/:qID/answers/:aID/vote-:dir', (req, res, next) => {
-  if(req.params.dir.search(/^(up|down)$/) === -1) {
-    const err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-  } else {
-    // We put the vote string directly on the object, it allows the reader to quickly understand what the value
-    // of the variable is about when they read it in the next callback function.
-    req.vote = req.params.dir;
-    next();
-  }
-}, 
-function(req, res, next) {
-  // Calls our instance method vote on the answer
-  req.answr.vote(req.vote, function(err, question) {
-    if (err) return next(err);
-    res.json(question);
-  });
+router.post("/:qID/answers/:aID/vote-:dir", 
+	function(req, res, next){
+		if(req.params.dir.search(/^(up|down)$/) === -1) {
+			var err = new Error("Not Found");
+			err.status = 404;
+			next(err);
+		} else {
+      // We put the vote string directly on the object, it allows the reader to quickly understand what the value
+      // of the variable is about when they read it in the next callback function.
+			req.vote = req.params.dir;
+			next();
+		}
+	}, 
+	function(req, res, next){
+		req.answer.vote(req.vote, function(err, question){
+			if(err) return next(err);
+			res.json(question);
+		});
 });
 
 module.exports = router;

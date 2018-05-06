@@ -45,36 +45,30 @@ const QuestionSchema = new Schema({
 // 1. we want to apply the updates to unanswered document
 // 2. we want the answers updated property to be the current time
 // We can call instance update method directly on the answer when we want to update it
-AnswerSchema.method('update') = function (updates, callback) {
+AnswerSchema.method('update', function(updates, callback) {
     // merge the updates into the answers document
     // this - answers document (target object), 
     Object.assign(this, updates, {updatedAt: new Date()});
     // saves the parent document, the question associated with the answer;
     // to access the question we can use the answers parent method
-    this
-        .parent()
-        .save(callback);
-}
+    this.parent().save(callback);
+});
 
 // vote instance method to help with translating strings from the URL into math
 // that moves the counts up or down
-AnswerSchema.method('vote') = function (votes, callback) {
+AnswerSchema.method('vote', function(vote, callback) {
     if (vote === 'up') {
         this.votes += 1;
     } else {
         this.votes -= 1;
     }
     // we need to save the parent and pass in the callback to save
-    this
-        .parent()
-        .save(callback);
-}
+    this.parent().save(callback);
+});
 
 // pre-save hook
-QuestionSchema.pre('save', function (next) {
-    this
-        .answers
-        .sort(sortAnswers); // Mongoose will sort the answers every time it is saved keeping the state of ur DB up to date
+QuestionSchema.pre('save', function(next) {
+    this.answers.sort(sortAnswers); // Mongoose will sort the answers every time it is saved keeping the state of ur DB up to date
     next();
 });
 

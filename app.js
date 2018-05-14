@@ -27,6 +27,19 @@ db.once('open', () => {
   console.log('DB is connected!');
 });
 
+// CORS
+app.use((req, res, next) => {
+	// restricts the domains which the API can respond to  
+	res.header('Access-Control-Allow-Origin', '*'); // * - we can make requests to this API from any domain
+	// tells the client which headers are  in their request 
+	res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept'); // a standart set of headers
+	if (req.method === 'OPTIONS') {
+		res.header('Access-Control-Allow-Methods', 'PUT, POST, DELETE');
+		return res.status(200).json({});
+	}
+	next();
+});
+
 app.use('/questions', routes);
 
 // catch 404 error and forward to error handler
